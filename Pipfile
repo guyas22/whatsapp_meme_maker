@@ -1,0 +1,38 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+beautifulsoup4 = "*"
+black = "*"
+tiktoken = "*"
+openai = "*"
+pinecone-client = "*"
+unstructured = "*"
+nltk = "*"
+fastapi = "*"
+jinja2 = "*"
+uvicorn = "*"
+streamlit = "*"
+streamlit-chat = "*"
+tqdm = "*"
+langchain-pinecone = "*"
+langchain = "*"
+langchain-openai = "*"
+pydantic = "*"
+langchain-community = "*"
+python-dotenv = "*"
+python-bidi = "*"
+arabic-reshaper = "*"
+pinecone = "*"
+huggingface-hub = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"
+python_full_version = "3.8.14"
+
+[pipenv]
+allow_prereleases = true
