@@ -42,3 +42,4 @@ utils/_chat.txt
 backend/vector_store/
 *.txt
 !requirements.txt  # Keep requirements.txt 
+utils/temp_template.jpg
