@@ -3,54 +3,77 @@ from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from backend.meme_parser import MemeOutputParser
+from backend.meme_parser import MemeOutputParser, MemeFormat
 from backend.meme_generator import MemeGenerator
+from backend.imgflip_api import ImgflipAPI
+import json
 import os
 
 # Constants
-MEME_TEMPLATE_PATH = "utils/9au02y.jpg"  # Default meme template
 OUTPUT_PATH = "output_meme.jpg"  # Where to save the generated meme
 
-# Initialize meme generator
+# Initialize components
 meme_generator = MemeGenerator()
+imgflip_api = ImgflipAPI()
 
-# Define the prompt template
-prompt = ChatPromptTemplate.from_messages([
+# Define the template selection prompt
+template_selection_prompt = ChatPromptTemplate.from_messages([
     (
         "system",
-        """
-        You are a skilled meme creator specializing in generating memes from WhatsApp group chat context. Your job is to take the given chat context and question, and transform them into a funny meme **in Hebrew** that references the group's inside jokes and conversations.
+        """You are a meme template expert. Your job is to select the most appropriate meme template based on the given context and query.
+            You will be provided with a list of available templates and their metadata, along with the chat context and user's query.
 
-        Guidelines:
-        1. Analyze the chat context carefully to identify:
-           - Inside jokes and recurring themes
-           - Group-specific slang and expressions
-           - Memorable moments or conversations
-           - Common interactions between group members
-        2. Use these elements to create a meme that will resonate with the group
-        3. You should use RTL text - right to left text
-        3. Keep the text short, punchy, and funny
-        4. Prioritize references that appeared multiple times in the chat
-        5. Consider the timing and relevance of the jokes (recent ones may be more impactful)
-        6. You can use irony, sarcasm, or local Israeli humor
+            Consider the following when selecting a template:
+            1. The template should match the mood and intent of the query
+            2. The template should be with format of top text and bottom text, dont choose templates that have complex format
+            3. The template should have the right format for the intended joke
+            4. Consider how the template is typically used in meme culture
+            5. Consider the chat context and the user's query
+            Your response should be a JSON object with these fields:
+            - template_id: string ID of the selected template
+            - explanation: brief explanation of why this template was chosen and how it should be used
+            - typical_format: brief description of how text is typically formatted for this template
 
-        Your response MUST be a valid JSON object with exactly these two fields:
-        - top_text: string in Hebrew for the top text of the meme
-        - bottom_text: string in Hebrew for the bottom text of the meme
+            Example response:
+            {{"template_id": "181913649", "explanation": "Selected the Drake template because the query suggests a comparison or preference scenario", "typical_format": "Top text: the rejected option, Bottom text: the preferred option"}}"""
+                ),
+                ("human", "Available templates: {templates}"),
+                ("human", "Chat context: {context}"),
+                ("human", "Query: {query}")
+            ])
 
-        General example of a message from the context:
-        [YYYY-MM-DD HH:MM:SS] [name]: [message]
-        Example response:
-        {{
-            "top_text": "הטקסט העליון של המם",
-            "bottom_text": "הטקסט התחתון של המם"
-        }}
+# Define the meme text generation prompt
+meme_text_prompt = ChatPromptTemplate.from_messages([
+    (
+        "system",
+        """You are a skilled meme creator specializing in generating memes from WhatsApp group chat context. Your job is to create the perfect text for the selected meme template, using the chat context and following the template's typical format.
 
-        DO NOT include any other text, markdown formatting, or code blocks in your response.
-        """
+Template Information:
+{template_info}
+
+Guidelines:
+1. Follow the template's typical format exactly as described
+2. Use the chat context to create relevant humor:
+   - Reference inside jokes and recurring themes
+   - Use group-specific slang and expressions
+   - Reference memorable moments or conversations
+3. Write in Hebrew with RTL text
+4. Keep the text short, punchy, and funny
+5. Make sure the text fits the template's style and format
+6. Use irony, sarcasm, or local Israeli humor when appropriate
+
+Your response MUST be a valid JSON object with exactly these two fields:
+- top_text: string in Hebrew for the top text of the meme
+- bottom_text: string in Hebrew for the bottom text of the meme
+
+Example response:
+{{
+    "top_text": "הטקסט העליון של המם",
+    "bottom_text": "הטקסט התחתון של המם"
+}}"""
     ),
     ("human", "Context: {context}"),
-    ("human", "Question: {question}")
+    ("human", "Query: {query}")
 ])
 
 class ChatFlowHandler:
@@ -66,30 +89,18 @@ class ChatFlowHandler:
         )
     
     def process_uploaded_chat(self, chat_file_path: str) -> bool:
-        """
-        Process an uploaded chat file and create FAISS index
-        Returns True if successful, False otherwise
-        """
+        """Process an uploaded chat file and create FAISS index"""
         try:
-            # Save the chat file path to environment
             os.environ["CHAT_FILE_PATH"] = chat_file_path
-            
-            # Process the chat file
             process_chat()
-            
-            # Load the created vector store
             self.load_vector_store()
-            
             return True
         except Exception as e:
             print(f"Error processing chat: {str(e)}")
             return False
     
     def load_vector_store(self) -> bool:
-        """
-        Load the FAISS vector store from disk
-        Returns True if successful, False otherwise
-        """
+        """Load the FAISS vector store from disk"""
         try:
             if os.path.exists("backend/vector_store"):
                 self.vector_store = FAISS.load_local(
@@ -103,49 +114,7 @@ class ChatFlowHandler:
             print(f"Error loading vector store: {str(e)}")
             return False
     
-    def search_similar_conversations(self, query: str, k: int = 5):
-        """
-        Search for similar conversations in the vector store
-        """
-        if not self.vector_store:
-            if not self.load_vector_store():
-                return []
-        
-        try:
-            results = self.vector_store.similarity_search_with_score(
-                query,
-                k=k
-            )
-            return [(doc.page_content, doc.metadata, score) for doc, score in results]
-        except Exception as e:
-            print(f"Error searching conversations: {str(e)}")
-            return []
-            
-    def create_meme_chain(self):
-        """
-        Creates a chain for generating memes using the local FAISS store
-        """
-        if not self.vector_store:
-            if not self.load_vector_store():
-                raise Exception("Vector store not loaded")
-        
-        retriever = self.vector_store.as_retriever(
-            search_kwargs={"k": 5}
-        )
-        
-        chain = (
-            {
-                "context": retriever,
-                "question": RunnablePassthrough()
-            }
-            | prompt
-            | self.llm
-            | MemeOutputParser()
-        )
-        
-        return chain
-    
-    def get_context_for_query(self, query: str, k: int = 5):
+    def get_context_for_query(self, query: str, k: int = 5) -> str:
         """Get relevant context and metadata for a query"""
         if not self.vector_store:
             if not self.load_vector_store():
@@ -157,39 +126,73 @@ class ChatFlowHandler:
         )
         return [(doc.page_content, doc.metadata) for doc, score in results]
     
+    def select_template(self, query: str, context: str, templates: list) -> dict:
+        """Select appropriate meme template"""
+        chain = template_selection_prompt | self.llm
+        response = chain.invoke({
+            "templates": templates[:10],
+            "context": context,
+            "query": query
+        })
+        return json.loads(response.content)
+    
+    def generate_meme_text(self, query: str, context: str, template_info: str) -> MemeFormat:
+        """Generate meme text based on template and context"""
+        chain = meme_text_prompt | self.llm | MemeOutputParser()
+        response = chain.invoke({
+            "query": query,
+            "context": context,
+            "template_info": template_info
+        })
+        return response
+    
     def generate_meme(self, query: str) -> dict:
-        """
-        Generate a meme based on the query using the chat context
-        
-        Args:
-            query (str): The query/prompt for meme generation
-            
-        Returns:
-            dict: Contains the query, meme text, path to generated meme, and context chunks
-        """
+        """Generate a meme based on the query using the chat context"""
         try:
-            # First get the context that will be used
-            context_chunks = self.get_context_for_query(query)
+            # Get relevant context
+            context = self.get_context_for_query(query)
             
-            # Generate the meme
-            chain = self.create_meme_chain()
-            print("Sending query:", query)
-            response = chain.invoke(query)
-            print("Raw response from LLM:", response)
+            # Get available templates
+            templates = imgflip_api.get_meme_templates()
             
-            # Generate the meme image
+            # Select template
+            template_data = self.select_template(query, context, templates)
+            selected_template = next(
+                (t for t in templates if t["id"] == template_data["template_id"]),
+                templates[0]
+            )
+            
+            # Generate meme text
+            template_info = {
+                "name": selected_template["name"],
+                "explanation": template_data["explanation"],
+                "typical_format": template_data["typical_format"]
+            }
+            template_info_str = f"Template name: {template_info['name']}\nTemplate explanation: {template_info['explanation']}\nTemplate typical format: {template_info['typical_format']}"
+            print(f"Template info: {template_info_str}")
+            meme_text = self.generate_meme_text(query, context, template_info_str)
+            
+            # Generate meme image
+            template_path = imgflip_api.download_template(selected_template["url"], "temp_template.jpg")
             meme_path = meme_generator.create_meme(
-                MEME_TEMPLATE_PATH,
-                response.top_text,
-                response.bottom_text,
+                template_path,
+                meme_text.top_text,
+                meme_text.bottom_text,
                 OUTPUT_PATH
             )
             
+            # Clean up
+            if os.path.exists(template_path):
+                os.remove(template_path)
+            
             return {
                 "query": query,
-                "answer": response,
+                "template": selected_template,
+                "template_explanation": template_data["explanation"],
+                "template_format": template_data["typical_format"],
+                "meme_text": meme_text,
                 "meme_path": meme_path,
-                "context_chunks": context_chunks  # Include both content and metadata
+                "context_chunks": context
             }
         except Exception as e:
             print(f"Error generating meme: {str(e)}")
