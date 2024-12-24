@@ -4,6 +4,8 @@ import sys
 import tempfile
 from PIL import Image
 from datetime import datetime
+import zipfile
+import io
 
 # Add backend to Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -96,6 +98,14 @@ def display_chat_chunk(chunk_content, metadata, index):
     
     st.markdown("---")
 
+def extract_txt_from_zip(zip_content):
+    """Extract the first .txt file found in the zip archive"""
+    with zipfile.ZipFile(io.BytesIO(zip_content)) as zip_ref:
+        txt_files = [f for f in zip_ref.namelist() if f.lower().endswith('.txt')]
+        if not txt_files:
+            return None
+        return zip_ref.read(txt_files[0])
+
 def main():
     st.title("🎭 WhatsApp Meme Generator")
     
@@ -107,25 +117,35 @@ def main():
     
     # File upload section
     st.header("1. Upload Chat File")
-    uploaded_file = st.file_uploader("Choose a WhatsApp chat export file", type=['txt'])
+    uploaded_file = st.file_uploader("Choose a WhatsApp chat export file", type=['txt', 'zip'])
     
     if uploaded_file:
         # Create a temporary file to store the upload
         with tempfile.NamedTemporaryFile(delete=False, suffix='.txt') as tmp_file:
-            tmp_file.write(uploaded_file.getvalue())
-            temp_path = tmp_file.name
-        
-        if st.button("Process Chat"):
-            with st.spinner("Processing chat file..."):
-                success = st.session_state.chat_handler.process_uploaded_chat(temp_path)
-                if success:
-                    st.session_state.processing_complete = True
-                    st.success("Chat processed successfully!")
+            if uploaded_file.type == "application/zip":
+                # Extract text content from zip
+                txt_content = extract_txt_from_zip(uploaded_file.read())
+                if txt_content is None:
+                    st.error("No text file found in the zip archive")
                 else:
-                    st.error("Error processing chat file")
-        
-        # Clean up the temporary file
-        os.unlink(temp_path)
+                    tmp_file.write(txt_content)
+                    temp_path = tmp_file.name
+            else:
+                # Handle regular text file
+                tmp_file.write(uploaded_file.getvalue())
+                temp_path = tmp_file.name
+            
+            if st.button("Process Chat"):
+                with st.spinner("Processing chat file..."):
+                    success = st.session_state.chat_handler.process_uploaded_chat(temp_path)
+                    if success:
+                        st.session_state.processing_complete = True
+                        st.success("Chat processed successfully!")
+                    else:
+                        st.error("Error processing chat file")
+            
+            # Clean up the temporary file
+            os.unlink(temp_path)
     
     # Meme generation section
     if st.session_state.processing_complete:
@@ -152,18 +172,19 @@ def main():
                     
                     col1, col2 = st.columns([1, 2])
                     
-                    # Display context and conversations
+                    # Display generated meme
                     with col1:
+                        st.subheader("Generated Meme")
+                        image = Image.open(result['meme_path'])
+                        st.image(image, caption="Generated Meme", use_container_width=True)
+                        
+                    # Display context and conversations
+                    with col2:
                         st.subheader("AI Context Used")
                         # Display each conversation chunk in chat style
                         for idx, (content, metadata) in enumerate(result.get('context_chunks', []), 1):
                             display_chat_chunk(content, metadata, idx)
-                    
-                    # Display generated meme
-                    with col2:
-                        st.subheader("Generated Meme")
-                        image = Image.open(result['meme_path'])
-                        st.image(image, caption="Generated Meme", use_container_width=True)
+                        
 
 if __name__ == "__main__":
     main()
