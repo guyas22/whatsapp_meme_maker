@@ -64,7 +64,7 @@ meme_text_prompt = ChatPromptTemplate.from_messages([
             Your response MUST be a valid JSON object with exactly these two fields:
             - top_text: string in Hebrew for the top text of the meme
             - bottom_text: string in Hebrew for the bottom text of the meme
-            Mention people from the chat, and find the funniest joke you can
+            ** includ dark and edgy humor, improvise while reflecting the group's tone and personality.**
             Example response:
             {{
                 "top_text": "הטקסט העליון של המם",
