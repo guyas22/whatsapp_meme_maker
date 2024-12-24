@@ -35,7 +35,7 @@ template_selection_prompt = ChatPromptTemplate.from_messages([
             - typical_format: brief description of how text is typically formatted for this template
 
             Example response:
-            {{"template_id": "181913649", "explanation": "Selected the Drake template because the query suggests a comparison or preference scenario", "typical_format": "Top text: the rejected option, Bottom text: the preferred option"}}"""
+            {{"template_id": "181913649", "explanation": "Selected the Drake template because the query suggests a comparison or preference scenario", "typical_format": "Top text: something, Bottom text: the punchline"}}"""
                 ),
                 ("human", "Available templates: {templates}"),
                 ("human", "Chat context: {context}"),
@@ -48,40 +48,39 @@ meme_text_prompt = ChatPromptTemplate.from_messages([
         "system",
         """You are a skilled meme creator specializing in generating memes from WhatsApp group chat context. Your job is to create the perfect text for the selected meme template, using the chat context and following the template's typical format.
 
-Template Information:
-{template_info}
+            Template Information:
+            {template_info}
 
-Guidelines:
-1. Follow the template's typical format exactly as described
-2. Use the chat context to create relevant humor:
-   - Reference inside jokes and recurring themes
-   - Use group-specific slang and expressions
-   - Reference memorable moments or conversations
-3. Write in Hebrew with RTL text
-4. Keep the text short, punchy, and funny
-5. Make sure the text fits the template's style and format
-6. Use irony, sarcasm, or local Israeli humor when appropriate
+            Guidelines:
 
-Your response MUST be a valid JSON object with exactly these two fields:
-- top_text: string in Hebrew for the top text of the meme
-- bottom_text: string in Hebrew for the bottom text of the meme
+            2. Use the chat context to create relevant humor:
+            - Reference inside jokes and recurring themes
+            - Use group-specific slang and expressions
+            - Reference memorable moments or conversations
+            3. Write in the language of the query
+            4. Keep the text short, punchy, and funny
+            5. Use irony, sarcasm, or local Israeli humor when appropriate
 
-Example response:
-{{
-    "top_text": "הטקסט העליון של המם",
-    "bottom_text": "הטקסט התחתון של המם"
-}}"""
-    ),
-    ("human", "Context: {context}"),
-    ("human", "Query: {query}")
-])
+            Your response MUST be a valid JSON object with exactly these two fields:
+            - top_text: string in Hebrew for the top text of the meme
+            - bottom_text: string in Hebrew for the bottom text of the meme
+            Mention people from the chat, and find the funniest joke you can
+            Example response:
+            {{
+                "top_text": "הטקסט העליון של המם",
+                "bottom_text": "הטקסט התחתון של המם"
+            }}"""
+                ),
+                ("human", "Context: {context}"),
+                ("human", "Query: {query}")
+            ])
 
 class ChatFlowHandler:
     def __init__(self):
         self.vector_store = None
         self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
         self.llm = ChatOpenAI(
-            temperature=0.1,
+            temperature=0.4,
             model="gpt-4o-mini",
             presence_penalty=0.0,
             frequency_penalty=0.0,
@@ -114,7 +113,7 @@ class ChatFlowHandler:
             print(f"Error loading vector store: {str(e)}")
             return False
     
-    def get_context_for_query(self, query: str, k: int = 5) -> str:
+    def get_context_for_query(self, query: str, k: int = 2) -> str:
         """Get relevant context and metadata for a query"""
         if not self.vector_store:
             if not self.load_vector_store():
@@ -130,7 +129,7 @@ class ChatFlowHandler:
         """Select appropriate meme template"""
         chain = template_selection_prompt | self.llm
         response = chain.invoke({
-            "templates": templates[:10],
+            "templates": templates,
             "context": context,
             "query": query
         })
