@@ -27,6 +27,7 @@ python-bidi = "*"
 arabic-reshaper = "*"
 pinecone = "*"
 huggingface-hub = "*"
+faiss-cpu = "*"
 
 [dev-packages]
 
