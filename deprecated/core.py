@@ -16,7 +16,7 @@ load_dotenv()
 
 # Constants
 INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "whatsapp-memes")
-MEME_TEMPLATE_PATH = "backend/9au02y.jpg"  # Default meme template
+MEME_TEMPLATE_PATH = "utils/9au02y.jpg"  # Default meme template
 OUTPUT_PATH = "output_meme.jpg"  # Where to save the generated meme
 
 # Initialize meme generator

@@ -1,4 +1,4 @@
-from backend.core import query_chain
+from deprecated.core import query_chain
 import streamlit as st
 from streamlit_chat import message
 from dotenv import load_dotenv

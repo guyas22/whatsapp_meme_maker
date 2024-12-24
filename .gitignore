@@ -38,5 +38,7 @@ ENV/
 
 # Project specific
 backend/_chat.txt
+utils/_chat.txt
+backend/vector_store/
 *.txt
 !requirements.txt  # Keep requirements.txt 

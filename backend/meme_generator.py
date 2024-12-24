@@ -11,7 +11,8 @@ class MemeGenerator:
         If no font path is provided, it will use a default system font.
         """
         # A font that supports Hebrew (e.g. Arial Unicode, etc.)
-        self.font_path = font_path or "backend/fonts/Arial_Unicode.ttf"
+        self.font_path = font_path or "utils/fonts/Arial_Unicode.ttf"
+        
     
     def _reshape_rtl(self, text: str) -> str:
         """
@@ -133,7 +134,7 @@ class MemeGenerator:
 if __name__ == "__main__":
     generator = MemeGenerator()
     result = generator.create_meme(
-        "backend/9au02y.jpg",
+        "utils/9au02y.jpg",
         "טקסט עליוןעליוןעליוןעליוןעליוןעליון",
         "טקסט תחתוןתחתוןתחתוןתחתוןתחתון",
         "output_meme.jpg"

@@ -8,7 +8,7 @@ from backend.meme_generator import MemeGenerator
 import os
 
 # Constants
-MEME_TEMPLATE_PATH = "backend/9au02y.jpg"  # Default meme template
+MEME_TEMPLATE_PATH = "utils/9au02y.jpg"  # Default meme template
 OUTPUT_PATH = "output_meme.jpg"  # Where to save the generated meme
 
 # Initialize meme generator
