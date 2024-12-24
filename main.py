@@ -178,6 +178,15 @@ def main():
                         image = Image.open(result['meme_path'])
                         st.image(image, caption="Generated Meme", use_container_width=True)
                         
+                        # Add download button
+                        with open(result['meme_path'], "rb") as file:
+                            btn = st.download_button(
+                                label="⬇️ Download Meme",
+                                data=file,
+                                file_name="generated_meme.jpg",
+                                mime="image/jpeg"
+                            )
+                        
                     # Display context and conversations
                     with col2:
                         st.subheader("AI Context Used")
