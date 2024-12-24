@@ -11,7 +11,7 @@ class MemeGenerator:
         If no font path is provided, it will use a default system font.
         """
         # A font that supports Hebrew (e.g. Arial Unicode, etc.)
-        self.font_path = font_path or "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
+        self.font_path = font_path or "backend/fonts/Arial_Unicode.ttf"
     
     def _reshape_rtl(self, text: str) -> str:
         """

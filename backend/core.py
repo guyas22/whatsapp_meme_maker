@@ -46,6 +46,8 @@ prompt = ChatPromptTemplate.from_messages([
         - top_text: string in Hebrew for the top text of the meme
         - bottom_text: string in Hebrew for the bottom text of the meme
 
+        General example of a message from the context:
+        [YYYY-MM-DD HH:MM:SS] [name]: [message]
         Example response:
         {{
             "top_text": "הטקסט העליון של המם",
@@ -82,8 +84,8 @@ def create_qa_chain():
     
     # Initialize the language model with higher temperature for creativity
     llm = ChatOpenAI(
-        temperature=0.4,  # Higher temperature for more creative memes
-        model="gpt-4o",  # Using GPT-4 model
+        temperature=0.1,  # Higher temperature for more creative memes
+        model="gpt-4o-mini",  
         presence_penalty=0.0,
         frequency_penalty=0.0,
         response_format={"type": "json_object"}  # Enforce JSON response format
