@@ -29,7 +29,20 @@ def ingest_chat():
         os.remove(temp_path)
     
     if success:
-        return jsonify({'message': 'Chat processed successfully'}), 200
+        senders = chat_handler.get_senders()
+        ## remove the last sender
+        group_name = senders[-1]
+        senders = senders[:-1]
+        
+        
+        
+        print(f"Senders: {senders}")
+        return jsonify({
+            'message': 'Chat processed successfully',
+            'senders': senders,
+            'group_name': group_name
+        }), 200
+
     else:
         return jsonify({'error': 'Failed to process chat'}), 500
 
