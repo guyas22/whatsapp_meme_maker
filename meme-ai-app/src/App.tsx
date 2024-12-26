@@ -9,6 +9,9 @@ function App() {
   const [memePrompt, setMemePrompt] = useState('')
   const [generatedMeme, setGeneratedMeme] = useState<string | null>(null)
   const [contextChunks, setContextChunks] = useState<Array<{ content: string, metadata: any }>>([])
+  const [templateExplanation, setTemplateExplanation] = useState<string | null>(null)
+  const [templateFormat, setTemplateFormat] = useState<string | null>(null)
+  const [isExplanationVisible, setIsExplanationVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -88,6 +91,8 @@ function App() {
         content: chunk[0],
         metadata: chunk[1]
       })))
+      setTemplateExplanation(data.template_explanation || null)
+      setTemplateFormat(data.template_format || null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error generating meme')
     } finally {
@@ -198,6 +203,31 @@ function App() {
                   >
                     ⬇️ Download Meme
                   </button>
+                  {(templateExplanation || templateFormat) && (
+                    <div className="meme-explanation">
+                      <button 
+                        className="explanation-toggle"
+                        onClick={() => setIsExplanationVisible(!isExplanationVisible)}
+                      >
+                        {isExplanationVisible ? '🔼 Hide AI Explanation' : '🔽 Show AI Explanation'}
+                      </button>
+                      {isExplanationVisible && (
+                        <div className="explanation-content">
+                          <h4>About this Meme</h4>
+                          {templateExplanation && (
+                            <div className="explanation">
+                              <strong>Why this template:</strong> {templateExplanation}
+                            </div>
+                          )}
+                          {templateFormat && (
+                            <div className="format">
+                              <strong>Template format:</strong> {templateFormat}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="context-display">
