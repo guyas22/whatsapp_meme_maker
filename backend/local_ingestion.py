@@ -91,6 +91,28 @@ def group_messages_by_conversation(messages: List[str], min_messages: int = 10, 
     
     return processed_conversations
 
+def extract_unique_senders(messages: List[str]) -> List[str]:
+    """Extract unique sender names from messages.
+    
+    Args:
+        messages (List[str]): List of messages in string format
+        
+    Returns:
+        List[str]: List of unique sender names
+    """
+    senders = set()
+    for message in messages:
+        try:
+            # Extract sender name between ] and :
+            parts = message.split(']', 1)
+            if len(parts) > 1:
+                sender = parts[1].split(':', 1)[0].strip()
+                if sender:  # Only add non-empty sender names
+                    senders.add(sender)
+        except (IndexError, AttributeError):
+            continue
+    return sorted(list(senders))
+
 def main():
     # Load and parse chat
     handler = WhatsAppMessageHandler()
@@ -99,6 +121,12 @@ def main():
     
     # Convert WhatsAppMessage objects to strings
     message_strings = [str(message) for message in messages]
+    
+    # Extract unique senders
+    unique_senders = extract_unique_senders(message_strings)
+    print(f"\nFound {len(unique_senders)} unique senders in the chat:")
+    for sender in unique_senders:
+        print(f"- {sender}")
     
     # Group messages into conversations with minimum 10 messages
     conversations = group_messages_by_conversation(message_strings, min_messages=10)
@@ -153,6 +181,7 @@ def main():
     vector_store.save_local("backend/vector_store")
     
     print(f"Successfully saved {len(all_chunks)} conversation chunks to local FAISS index")
+    return unique_senders
 
 if __name__ == "__main__":
     main() 

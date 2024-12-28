@@ -1,4 +1,4 @@
-from backend.local_ingestion import main as process_chat
+from backend.local_ingestion import main as process_chat, extract_unique_senders
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate
@@ -8,6 +8,7 @@ from backend.meme_generator import MemeGenerator
 from backend.imgflip_api import ImgflipAPI
 import json
 import os
+from typing import List
 
 # Constants
 OUTPUT_PATH = "output_meme.jpg"  # Where to save the generated meme
@@ -86,14 +87,19 @@ class ChatFlowHandler:
             frequency_penalty=0.0,
             response_format={"type": "json_object"}
         )
+        self.unique_senders = []
     
-    def process_uploaded_chat(self, chat_file_path: str) -> bool:
-        """Process an uploaded chat file and create FAISS index"""
+    def process_uploaded_chat(self, chat_path: str) -> bool:
+        """Process an uploaded chat file"""
         try:
-            os.environ["CHAT_FILE_PATH"] = chat_file_path
-            process_chat()
-            self.load_vector_store()
-            return True
+            # Set the chat file path in environment
+            os.environ["CHAT_FILE_PATH"] = chat_path
+            
+            # Process the chat file
+            self.unique_senders = process_chat()
+            
+            # Load the vector store
+            return self.load_vector_store()
         except Exception as e:
             print(f"Error processing chat: {str(e)}")
             return False
@@ -199,3 +205,7 @@ class ChatFlowHandler:
                 "query": query,
                 "error": str(e)
             } 
+    
+    def get_senders(self) -> List[str]:
+        """Return the list of unique senders in the chat"""
+        return self.unique_senders 

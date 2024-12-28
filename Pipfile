@@ -28,6 +28,8 @@ arabic-reshaper = "*"
 pinecone = "*"
 huggingface-hub = "*"
 faiss-cpu = "*"
+flask = "*"
+flask-cors = "*"
 
 [dev-packages]
 
