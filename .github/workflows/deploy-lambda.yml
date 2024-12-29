@@ -2,7 +2,7 @@ name: Deploy Lambda
 
 on:
   push:
-    branches: [ main ]  # or your default branch name
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -22,28 +22,31 @@ jobs:
 
     - name: Create deployment package
       run: |
-        mkdir package
-        cp -r backend package/
+        mkdir -p package/backend
+        rsync -av --exclude='__pycache__' --exclude='*.pyc' --exclude='*.pyo' --exclude='*.pyd' --exclude='tests' --exclude='docs' backend/ package/backend/
         cp app.py package/
         cp requirements.txt package/
+        
         cd package
         
-        # Remove unnecessary files
-        find . -type d -name "__pycache__" -exec rm -rf {} +
-        find . -type f -name "*.pyc" -delete
-        find . -type f -name "*.pyo" -delete
-        find . -type f -name "*.pyd" -delete
-        find . -type d -name "tests" -exec rm -rf {} +
-        find . -type d -name "test" -exec rm -rf {} +
-        find . -type d -name "docs" -exec rm -rf {} +
-        
         pip install --target . -r requirements.txt
+        rm -rf *.dist-info *.egg-info __pycache__
         
-        # Optional: Remove more unused files from packages
-        rm -rf *.dist-info
-        rm -rf *.egg-info
-        
+        # Zip the deployment package
         zip -r ../deployment.zip .
+        
+        # Debugging: Print largest files and folders
+        echo "=== Largest Directories ==="
+        du -h --max-depth=1 | sort -rh | head -n 10
+        
+        echo "=== Largest Files ==="
+        find . -type f -exec du -h {} + | sort -rh | head -n 10
+        
+        # Validate package size
+        if [ $(stat -c%s "../deployment.zip") -gt 50000000 ]; then
+          echo "Error: Deployment package exceeds 50 MB. Consider optimizing the package."
+          exit 1
+        fi
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -56,8 +59,9 @@ jobs:
       run: |
         # Upload to S3 first
         aws s3 cp deployment.zip s3://${{ secrets.AWS_S3_BUCKET }}/deployment.zip
+        
         # Update Lambda from S3
         aws lambda update-function-code \
           --function-name meme-generator-api \
           --s3-bucket ${{ secrets.AWS_S3_BUCKET }} \
-          --s3-key deployment.zip 
+          --s3-key deployment.zip
