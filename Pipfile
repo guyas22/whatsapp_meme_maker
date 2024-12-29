@@ -30,6 +30,8 @@ huggingface-hub = "*"
 faiss-cpu = "*"
 flask = "*"
 flask-cors = "*"
+awsgi = "*"
+aws-wsgi = "*"
 
 [dev-packages]
 

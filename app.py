@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from backend.chat_flow_handler import ChatFlowHandler
 import os
+import awsgi 
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -77,5 +78,8 @@ def generate_meme():
     else:
         return jsonify({'error': 'Failed to generate meme'}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000) 
+# if __name__ == '__main__':
+#     app.run(debug=True, port=5000) 
+
+def handler(event, context):
+    return awsgi.response(app, event, context)
