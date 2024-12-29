@@ -44,18 +44,17 @@ jobs:
       run: |
         docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest
 
-    - name: Create Lambda Function if Missing
+    - name: Create or Update Lambda Function
       run: |
-        if ! aws lambda get-function --function-name meme-generator-api >/dev/null 2>&1; then
-            aws lambda create-function \
-                --function-name meme-generator-api \
-                --package-type Image \
-                --code ImageUri=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
-                --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/<actual-execution-role-name>
+        aws lambda get-function --function-name meme-generator-api >/dev/null 2>&1
+        if [ $? -ne 0 ]; then
+          aws lambda create-function \
+            --function-name meme-generator-api \
+            --package-type Image \
+            --code ImageUri=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
+            --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/<actual-execution-role-name>
+        else
+          aws lambda update-function-code \
+            --function-name meme-generator-api \
+            --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest
         fi
-
-    - name: Update Lambda Function
-      run: |
-        aws lambda update-function-code \
-          --function-name meme-generator-api \
-          --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest
