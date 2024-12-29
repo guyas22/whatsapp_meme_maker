@@ -1,4 +1,4 @@
-name: Deploy Lambda with Dependencies in Layer
+name: Deploy Lambda with Docker
 
 on:
   push:
@@ -7,56 +7,30 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.8'
-
-    - name: Create Lambda Layer with Dependencies
+    - name: Authenticate with AWS ECR
       run: |
-        mkdir -p layer/python/lib/python3.8/site-packages
-        pip install -r requirements.txt -t layer/python/lib/python3.8/site-packages
-        
-        # Package the layer
-        cd layer
-        zip -r ../layer.zip .
+        aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
+          | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
-
-    - name: Publish Lambda Layer
+    - name: Build Docker Image
       run: |
-        LAYER_ARN=$(aws lambda publish-layer-version \
-          --layer-name meme-generator-layer \
-          --zip-file fileb://layer.zip \
-          --query LayerVersionArn --output text)
-        echo "LAYER_ARN=${LAYER_ARN}" >> $GITHUB_ENV
+        docker build -t meme-generator .
 
-    - name: Package Lambda Function Code
+    - name: Tag Docker Image
       run: |
-        mkdir -p package
-        cp app.py package/
-        zip -r deployment.zip package/
+        docker tag meme-generator:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest
 
-    - name: Deploy Lambda Function
+    - name: Push Docker Image to ECR
       run: |
-        # Upload the deployment package to S3
-        aws s3 cp deployment.zip s3://${{ secrets.AWS_S3_BUCKET }}/deployment.zip
-        
-        # Update Lambda function code
+        docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest
+
+    - name: Deploy to AWS Lambda
+      run: |
         aws lambda update-function-code \
           --function-name meme-generator-api \
-          --s3-bucket ${{ secrets.AWS_S3_BUCKET }} \
-          --s3-key deployment.zip
-        
-        # Attach the layer to the Lambda function
-        aws lambda update-function-configuration \
-          --function-name meme-generator-api \
-          --layers ${{ env.LAYER_ARN }}
+          --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest
