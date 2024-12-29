@@ -27,7 +27,22 @@ jobs:
         cp app.py package/
         cp requirements.txt package/
         cd package
+        
+        # Remove unnecessary files
+        find . -type d -name "__pycache__" -exec rm -rf {} +
+        find . -type f -name "*.pyc" -delete
+        find . -type f -name "*.pyo" -delete
+        find . -type f -name "*.pyd" -delete
+        find . -type d -name "tests" -exec rm -rf {} +
+        find . -type d -name "test" -exec rm -rf {} +
+        find . -type d -name "docs" -exec rm -rf {} +
+        
         pip install --target . -r requirements.txt
+        
+        # Optional: Remove more unused files from packages
+        rm -rf *.dist-info
+        rm -rf *.egg-info
+        
         zip -r ../deployment.zip .
 
     - name: Configure AWS credentials
