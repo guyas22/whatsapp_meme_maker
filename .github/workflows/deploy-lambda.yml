@@ -46,27 +46,13 @@ jobs:
 
     - name: Create or Update Lambda Function
       run: |
-        aws lambda update-function-code \
-          --function-name meme-generator \
-          --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
-          --region ${{ secrets.AWS_REGION }} || \
         aws lambda create-function \
-          --function-name meme-generator \
+          --function-name meme-generator-function \
+          --package-type Image \
           --code ImageUri=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
           --role ${{ secrets.AWS_LAMBDA_EXECUTION_ROLE }} \
-          --package-type Image \
+          --region ${{ secrets.AWS_REGION }} || \
+        aws lambda update-function-code \
+          --function-name meme-generator-function \
+          --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
           --region ${{ secrets.AWS_REGION }}
-
-      run: |
-        aws lambda get-function --function-name meme-generator-api >/dev/null 2>&1
-        if [ $? -ne 0 ]; then
-          aws lambda create-function \
-            --function-name meme-generator-api \
-            --package-type Image \
-            --code ImageUri=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
-            --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/<actual-execution-role-name>
-        else
-          aws lambda update-function-code \
-            --function-name meme-generator-api \
-            --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest
-        fi
