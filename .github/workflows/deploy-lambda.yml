@@ -46,12 +46,12 @@ jobs:
 
     - name: Create Lambda Function if Missing
       run: |
-        if ! aws lambda get-function --function-name meme-generator-api > /dev/null 2>&1; then
-          aws lambda create-function \
-            --function-name meme-generator-api \
-            --package-type Image \
-            --code ImageUri=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
-            --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/<actual-execution-role-name>
+        if ! aws lambda get-function --function-name meme-generator-api >/dev/null 2>&1; then
+            aws lambda create-function \
+                --function-name meme-generator-api \
+                --package-type Image \
+                --code ImageUri=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
+                --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/<actual-execution-role-name>
         fi
 
     - name: Update Lambda Function
