@@ -51,7 +51,7 @@ jobs:
             --function-name meme-generator-api \
             --package-type Image \
             --code ImageUri=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
-            --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/<execution-role-name>
+            --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/<actual-execution-role-name>
         fi
 
     - name: Update Lambda Function
