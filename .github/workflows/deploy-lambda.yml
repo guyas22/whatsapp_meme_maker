@@ -46,13 +46,19 @@ jobs:
 
     - name: Create or Update Lambda Function
       run: |
-        aws lambda create-function \
-          --function-name meme-generator-function \
-          --package-type Image \
-          --code ImageUri=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
-          --role ${{ secrets.AWS_LAMBDA_EXECUTION_ROLE }} \
-          --region ${{ secrets.AWS_REGION }} || \
-        aws lambda update-function-code \
-          --function-name meme-generator-function \
-          --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
-          --region ${{ secrets.AWS_REGION }}
+        if aws lambda get-function --function-name meme-generator-function --region ${{ secrets.AWS_REGION }}; then
+          echo "Function exists, updating..."
+          aws lambda update-function-code \
+            --function-name meme-generator-function \
+            --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
+            --region ${{ secrets.AWS_REGION }}
+        else
+          echo "Function does not exist, creating..."
+          aws lambda create-function \
+            --function-name meme-generator-function \
+            --package-type Image \
+            --code ImageUri=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
+            --role ${{ secrets.AWS_LAMBDA_EXECUTION_ROLE }} \
+            --region ${{ secrets.AWS_REGION }}
+        fi
+
