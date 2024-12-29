@@ -44,7 +44,16 @@ jobs:
       run: |
         docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest
 
-    - name: Deploy to AWS Lambda
+    - name: Create Lambda Function if Missing
+      run: |
+        aws lambda get-function --function-name meme-generator-api || \
+        aws lambda create-function \
+          --function-name meme-generator-api \
+          --package-type Image \
+          --code ImageUri=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
+          --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/<execution-role-name>
+
+    - name: Update Lambda Function
       run: |
         aws lambda update-function-code \
           --function-name meme-generator-api \
