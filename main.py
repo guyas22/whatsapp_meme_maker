@@ -107,13 +107,22 @@ def extract_txt_from_zip(zip_content):
         return zip_ref.read(txt_files[0])
 
 def main():
-    st.title("🎭 WhatsApp Meme Generator")
-    
     # Initialize session state
     if 'chat_handler' not in st.session_state:
         st.session_state.chat_handler = ChatFlowHandler()
     if 'processing_complete' not in st.session_state:
         st.session_state.processing_complete = False
+    
+    # Sidebar with user info
+    with st.sidebar:
+        st.title("User Info")
+        try:
+            if st.experimental_user.email:
+                st.success(f"Welcome, {st.experimental_user.email}! 👋")
+        except:
+            st.info("Running in local mode")
+    
+    st.title("🎭 WhatsApp Meme Generator")
     
     # File upload section
     st.header("1. Upload Chat File")

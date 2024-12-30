@@ -5,16 +5,10 @@ import os
 import awsgi 
 
 app = Flask(__name__)
-CORS(app, resources={
-    r"/*": {
-        "origins": ["https://main.d3pwcp73zpm2st.amplifyapp.com"],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "Origin"],
-        "expose_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True,
-        "max_age": 600
-    }
-})
+# Simpler CORS setup
+CORS(app, 
+     origins=["https://main.d3pwcp73zpm2st.amplifyapp.com"],
+     supports_credentials=True)
 
 # Add CORS headers to all responses
 @app.after_request
@@ -27,7 +21,7 @@ def after_request(response):
 
 chat_handler = ChatFlowHandler()
 
-@app.route('/api/ping', methods=['GET'])
+@app.route('/api/ping', methods=['GET', 'OPTIONS'])
 def ping():
     """Simple endpoint to test API connectivity"""
     return jsonify({
