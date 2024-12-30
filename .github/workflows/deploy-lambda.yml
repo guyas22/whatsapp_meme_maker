@@ -44,13 +44,26 @@ jobs:
       run: |
         docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest
 
-    - name: Create or Update Lambda Function
+    - name: Deploy or Update Lambda Function
       run: |
-          echo "Function does not exist, creating..."
-          aws lambda create-function \
-            --function-name meme-generator-function \
-            --package-type Image \
-            --code ImageUri=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest \
-            --role ${{ secrets.AWS_LAMBDA_EXECUTION_ROLE }} \
-            --region ${{ secrets.AWS_REGION }}
+        FUNCTION_NAME="meme-generator-api"
+        IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/meme-generator:latest"
 
+        # Check if the Lambda function already exists
+        aws lambda get-function --function-name $FUNCTION_NAME --region ${{ secrets.AWS_REGION }} || FUNCTION_EXISTS=false
+
+        if [ "$FUNCTION_EXISTS" == "false" ]; then
+          # Create a new Lambda function
+          aws lambda create-function \
+            --function-name $FUNCTION_NAME \
+            --package-type Image \
+            --code ImageUri=$IMAGE_URI \
+            --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
+            --region ${{ secrets.AWS_REGION }}
+        else
+          # Update the existing Lambda function
+          aws lambda update-function-code \
+            --function-name $FUNCTION_NAME \
+            --image-uri $IMAGE_URI \
+            --region ${{ secrets.AWS_REGION }}
+        fi
