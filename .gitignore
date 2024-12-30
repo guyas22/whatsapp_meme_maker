@@ -45,3 +45,5 @@ ENV/
 
 # Project specific
 backend/vector_store/
+.env
+meme-ai-app/.env
