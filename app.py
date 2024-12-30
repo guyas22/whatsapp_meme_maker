@@ -17,6 +17,14 @@ CORS(app, resources={
 })
 chat_handler = ChatFlowHandler()
 
+@app.route('/api/ping', methods=['GET'])
+def ping():
+    """Simple endpoint to test API connectivity"""
+    return jsonify({
+        'status': 'success',
+        'message': 'pong'
+    }), 200
+
 @app.route('/api/ingest-chat', methods=['POST'])
 def ingest_chat():
     """Endpoint to ingest a chat file"""

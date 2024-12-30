@@ -209,11 +209,36 @@ function App() {
     setShowMentions(false)
   }
 
+  const testConnection = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/ping`, {
+        method: 'GET',
+        headers: {
+          'Origin': window.location.origin,
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Ping response:', data);
+      alert('Connection successful! Server responded with: ' + data.message);
+    } catch (error) {
+      console.error('Connection test failed:', error);
+      alert('Connection failed! Check console for details.');
+    }
+  }
+
   return (
     <div className="app-container">
       <header>
         <h1>WhatsApp Meme Generator</h1>
         <p className="subtitle">Turn your chat conversations into hilarious memes!</p>
+        <button onClick={testConnection} className="test-connection">
+          Test Connection
+        </button>
       </header>
 
       <ProgressBar />
