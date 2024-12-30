@@ -73,6 +73,7 @@ function App() {
         headers: {
           'Origin': 'https://main.d3pwcp73zpm2st.amplifyapp.com',
         },
+        credentials: 'include',
         body: formData
       })
 
@@ -105,6 +106,7 @@ function App() {
           'Content-Type': 'application/json',
           'Origin': 'https://main.d3pwcp73zpm2st.amplifyapp.com',
         },
+        credentials: 'include',
         body: JSON.stringify({ query: memePrompt })
       })
 
@@ -215,7 +217,9 @@ function App() {
         method: 'GET',
         headers: {
           'Origin': window.location.origin,
-        }
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
       });
 
       if (!response.ok) {
