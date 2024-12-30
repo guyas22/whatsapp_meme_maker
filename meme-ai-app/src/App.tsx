@@ -217,7 +217,9 @@ function App() {
         method: 'GET',
         headers: {
           'Origin': 'https://main.d3pwcp73zpm2st.amplifyapp.com',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': 'https://main.d3pwcp73zpm2st.amplifyapp.com',
+          'Access-Control-Allow-Credentials': 'true'
         },
         credentials: 'include'
       });
