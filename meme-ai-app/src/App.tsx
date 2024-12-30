@@ -216,7 +216,7 @@ function App() {
       const response = await fetch(`${API_BASE_URL}/api/ping`, {
         method: 'GET',
         headers: {
-          'Origin': window.location.origin,
+          'Origin': 'https://main.d3pwcp73zpm2st.amplifyapp.com',
           'Content-Type': 'application/json'
         },
         credentials: 'include'
