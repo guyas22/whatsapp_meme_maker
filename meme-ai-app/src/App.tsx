@@ -68,9 +68,12 @@ function App() {
     formData.append('file', file)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/ingest-chat`, {
+      const response = await fetch(`${API_BASE_URL}/api/ingest-chat`, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Origin': 'https://main.d3pwcp73zpm2st.amplifyapp.com',
+        },
+        body: formData
       })
 
       if (!response.ok) {
@@ -96,12 +99,13 @@ function App() {
     setError(null)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/generate-meme`, {
+      const response = await fetch(`${API_BASE_URL}/api/generate-meme`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Origin': 'https://main.d3pwcp73zpm2st.amplifyapp.com',
         },
-        body: JSON.stringify({ query: memePrompt }),
+        body: JSON.stringify({ query: memePrompt })
       })
 
       if (!response.ok) {
