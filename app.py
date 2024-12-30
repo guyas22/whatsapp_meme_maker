@@ -5,7 +5,13 @@ import os
 import awsgi 
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "https://main.d3pwcp73zpm2st.amplifyapp.com",
+        "methods": ["GET", "POST", "PUT", "DELETE"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 chat_handler = ChatFlowHandler()
 
 @app.route('/api/ingest-chat', methods=['POST'])
