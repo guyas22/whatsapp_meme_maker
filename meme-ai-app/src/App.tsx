@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = 'https://whatsapp-meme-maker.onrender.com';
 console.log('API_BASE_URL:', API_BASE_URL);
 console.log('Environment Variables:', import.meta.env);
 
@@ -70,15 +70,12 @@ function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/ingest-chat`, {
         method: 'POST',
-        headers: {
-          'Origin': 'https://main.d3pwcp73zpm2st.amplifyapp.com',
-        },
-        credentials: 'include',
         body: formData
       })
 
       if (!response.ok) {
-        throw new Error(`Error processing chat: ${response.statusText}`)
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `Error processing chat: ${response.statusText}`);
       }
 
       const data = await response.json()
@@ -87,6 +84,7 @@ function App() {
       setGroupName(data.group_name || '')
       setCurrentStep(2)
     } catch (err) {
+      console.error('Process chat error:', err);
       setError(err instanceof Error ? err.message : 'Error processing chat file')
     } finally {
       setIsLoading(false)
@@ -104,14 +102,13 @@ function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Origin': 'https://main.d3pwcp73zpm2st.amplifyapp.com',
         },
-        credentials: 'include',
         body: JSON.stringify({ query: memePrompt })
       })
 
       if (!response.ok) {
-        throw new Error(`Error generating meme: ${response.statusText}`)
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `Error generating meme: ${response.statusText}`);
       }
 
       const data = await response.json()
