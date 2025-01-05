@@ -79,10 +79,10 @@ export const ResultSection: React.FC<ResultSectionProps> = ({
         <div className="context-display">
           <h3>Chat Context Used</h3>
           <div className="chat-container">
-            {contextChunks.map((chunk, index) => (
+            {contextChunks?.map((chunk, index) => (
               <div key={index} className="conversation-chunk">
                 <h4>Conversation {index + 1}</h4>
-                <ChatMessage message={chunk.content} />
+                <ChatMessage message={chunk?.content || ''} />
               </div>
             ))}
           </div>

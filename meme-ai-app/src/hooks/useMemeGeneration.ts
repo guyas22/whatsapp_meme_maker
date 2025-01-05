@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createImageUrlFromHexData } from '../utils/memeUtils';
 
 interface MemeGenerationResult {
   imageUrl: string;
@@ -70,18 +71,30 @@ export const useMemeGeneration = (apiBaseUrl: string): UseMemeGenerationReturn =
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: memePrompt }),
+        body: JSON.stringify({ query: memePrompt }),
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result: MemeGenerationResult = await response.json();
-      setGeneratedMeme(result.imageUrl);
-      setContextChunks(result.contextChunks);
-      setTemplateExplanation(result.templateExplanation);
-      setTemplateFormat(result.templateFormat);
+      const result = await response.json();
+      console.log('API Response:', result);
+      console.log('Raw Context Chunks:', result.context_chunks);
+      
+      const imageUrl = createImageUrlFromHexData(result.image_data);
+      setGeneratedMeme(imageUrl);
+      
+      const processedChunks = result.context_chunks.map((chunk: [string, any]) => ({
+        content: chunk[0],
+        metadata: chunk[1]
+      }));
+
+      console.log('Processed Context Chunks:', processedChunks);
+      setContextChunks(processedChunks);
+      
+      setTemplateExplanation(result.template_explanation);
+      setTemplateFormat(result.template_format);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate meme');
     } finally {
