@@ -11,7 +11,7 @@ import os
 from typing import List
 
 # Constants
-OUTPUT_PATH = "output_meme.jpg"  # Where to save the generated meme
+OUTPUT_PATH = "backend/output_meme.jpg"  # Where to save the generated meme
 
 # Initialize components
 meme_generator = MemeGenerator()
