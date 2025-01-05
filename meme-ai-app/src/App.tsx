@@ -101,19 +101,24 @@ function App() {
   return (
     <div className="app-container">
       <header>
-        <h1>AI Meme Generator</h1>
-        <p className="subtitle">Turn your WhatsApp chat conversations into hilarious memes!</p>
-        <button onClick={testConnection} className="test-connection">
-          Test Connection
-        </button>
+        <div className="header-content">
+          <h1>AI Meme Generator</h1>
+          <p className="subtitle">Turn your WhatsApp chat conversations into hilarious memes!</p>
+          <div className="header-actions">
+            <button onClick={testConnection} className="test-connection">
+              Test Connection
+            </button>
+          </div>
+        </div>
       </header>
 
       <ProgressBar currentStep={currentStep} />
 
       <main>
         {(fileError || memeError) && (
-          <div className="error-message">
-            {fileError || memeError}
+          <div className="error-message" role="alert">
+            <span className="error-icon">⚠️</span>
+            <span>{fileError || memeError}</span>
           </div>
         )}
 
@@ -155,6 +160,12 @@ function App() {
           handleShareMeme={handleShareMeme}
         />
       </main>
+
+      <footer className="footer">
+        <p>Made with ❤️ by <a href="https://www.linkedin.com/in/guy-asulin-b3b1461ba/" target="_blank" rel="noopener noreferrer">Guy Asulin</a></p>
+        <p><a href="https://github.com/guyas22/whatsapp_meme_maker" target="_blank" rel="noopener noreferrer">Github</a></p>
+        <p className="job-status">psst... 👀 looking for a Software Engineering position!</p>
+      </footer>
     </div>
   )
 }
