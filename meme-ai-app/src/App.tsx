@@ -2,8 +2,8 @@ import { useState } from 'react'
 import './App.css'
 
 const API_BASE_URL = 'https://whatsapp-meme-maker.onrender.com';
-console.log('API_BASE_URL:', API_BASE_URL);
-console.log('Environment Variables:', import.meta.env);
+// console.log('API_BASE_URL:', API_BASE_URL);
+// console.log('Environment Variables:', import.meta.env);
 
 function App() {
   // State management

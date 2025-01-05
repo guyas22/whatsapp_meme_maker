@@ -1,19 +1,21 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-from backend.chat_flow_handler import ChatFlowHandler
+from chat_flow_handler import ChatFlowHandler
 import os
 import awsgi 
 
 app = Flask(__name__)
 # Simpler CORS setup
 CORS(app, 
-     origins=["https://main.d3pwcp73zpm2st.amplifyapp.com"],
+     origins=["*"],  # Allow all origins for development
      supports_credentials=True)
 
 # Add CORS headers to all responses
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'https://main.d3pwcp73zpm2st.amplifyapp.com')
+    # Get the origin from the request headers, fallback to '*' if not present
+    origin = request.headers.get('Origin', '*')
+    response.headers.add('Access-Control-Allow-Origin', origin)
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Origin')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
