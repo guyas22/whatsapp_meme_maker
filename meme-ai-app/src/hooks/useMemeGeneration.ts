@@ -1,13 +1,6 @@
 import { useState } from 'react';
 import { createImageUrlFromHexData } from '../utils/memeUtils';
 
-interface MemeGenerationResult {
-  imageUrl: string;
-  contextChunks: Array<{ content: string; metadata: any }>;
-  templateExplanation: string | null;
-  templateFormat: string | null;
-}
-
 interface UseMemeGenerationReturn {
   memePrompt: string;
   generatedMeme: string | null;
@@ -79,8 +72,6 @@ export const useMemeGeneration = (apiBaseUrl: string): UseMemeGenerationReturn =
       }
 
       const result = await response.json();
-      console.log('API Response:', result);
-      console.log('Raw Context Chunks:', result.context_chunks);
       
       const imageUrl = createImageUrlFromHexData(result.image_data);
       setGeneratedMeme(imageUrl);
@@ -90,7 +81,6 @@ export const useMemeGeneration = (apiBaseUrl: string): UseMemeGenerationReturn =
         metadata: chunk[1]
       }));
 
-      console.log('Processed Context Chunks:', processedChunks);
       setContextChunks(processedChunks);
       
       setTemplateExplanation(result.template_explanation);
