@@ -1,4 +1,4 @@
-from backend.whatsapp_handler import WhatsAppMessageHandler
+from whatsapp_handler import WhatsAppMessageHandler
 from dotenv import load_dotenv
 load_dotenv()
 from langchain.text_splitter import RecursiveCharacterTextSplitter

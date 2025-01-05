@@ -1,11 +1,11 @@
-from backend.local_ingestion import main as process_chat, extract_unique_senders
+from local_ingestion import main as process_chat, extract_unique_senders
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from backend.meme_parser import MemeOutputParser, MemeFormat
-from backend.meme_generator import MemeGenerator
-from backend.imgflip_api import ImgflipAPI
+from meme_parser import MemeOutputParser, MemeFormat
+from meme_generator import MemeGenerator
+from imgflip_api import ImgflipAPI
 import json
 import os
 from typing import List
