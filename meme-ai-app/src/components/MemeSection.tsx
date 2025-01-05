@@ -1,4 +1,5 @@
 import React from 'react';
+import { MemeGenerationIndicator } from './LoadingIndicators';
 
 interface MemeSectionProps {
   currentStep: number;
@@ -9,7 +10,7 @@ interface MemeSectionProps {
   isLoading: boolean;
   showMentions: boolean;
   mentionFilter: string;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleMentionClick: (sender: string) => void;
   handleGenerateMeme: () => void;
   setMemePrompt: (prompt: string) => void;
@@ -79,13 +80,18 @@ export const MemeSection: React.FC<MemeSectionProps> = ({
 
           <div className="meme-input">
             <div className="input-container">
-              <input
-                type="text"
+              <textarea
                 value={memePrompt}
                 onChange={handleInputChange}
                 placeholder="תאר את המם שאתה רוצה ליצור... (השתמש ב-@ כדי לתייג חבר)"
                 dir="rtl"
                 disabled={isLoading}
+                rows={1}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = 'auto';
+                  target.style.height = target.scrollHeight + 'px';
+                }}
               />
               {showMentions && (
                 <div className="mentions-dropdown">
@@ -109,10 +115,10 @@ export const MemeSection: React.FC<MemeSectionProps> = ({
             <button 
               onClick={handleGenerateMeme}
               disabled={!memePrompt || isLoading}
-              className="generate-button"
+              className={`generate-button ${isLoading ? 'loading' : ''}`}
             >
               {isLoading ? (
-                <span className="loading-spinner">🔄</span>
+                <MemeGenerationIndicator message="Creating your meme... This might take a few seconds" />
               ) : (
                 'Generate Meme 🎨'
               )}
