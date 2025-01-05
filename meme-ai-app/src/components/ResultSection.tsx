@@ -10,6 +10,7 @@ interface ResultSectionProps {
   setIsExplanationVisible: (visible: boolean) => void;
   contextChunks: Array<{ content: string; metadata: any }>;
   handleDownloadMeme: () => void;
+  handleShareMeme: () => void;
 }
 
 export const ResultSection: React.FC<ResultSectionProps> = ({
@@ -21,6 +22,7 @@ export const ResultSection: React.FC<ResultSectionProps> = ({
   setIsExplanationVisible,
   contextChunks,
   handleDownloadMeme,
+  handleShareMeme,
 }) => {
   if (!generatedMeme) return null;
 
@@ -40,15 +42,7 @@ export const ResultSection: React.FC<ResultSectionProps> = ({
               </button>
               <button 
                 className="share-button"
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({
-                      title: 'Check out my meme!',
-                      text: 'Generated with WhatsApp Meme Generator',
-                      url: generatedMeme
-                    });
-                  }
-                }}
+                onClick={handleShareMeme}
               >
                 Share Meme 🔗
               </button>
