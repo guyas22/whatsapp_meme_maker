@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import './App.css'
+import JSZip from 'jszip'
 
-const API_BASE_URL = 'https://m29dguntvm.us-east-1.awsapprunner.com';
-// console.log('API_BASE_URL:', API_BASE_URL);
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL 
+
+
+console.log('API_BASE_URL:', API_BASE_URL);
 // console.log('Environment Variables:', import.meta.env);
 
 function App() {
@@ -36,25 +39,76 @@ function App() {
     }
   }
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-    
-    const droppedFile = e.dataTransfer.files?.[0]
-    if (droppedFile && (droppedFile.name.endsWith('.txt') || droppedFile.name.endsWith('.zip'))) {
-      setFile(droppedFile)
-      setError(null)
-    } else {
-      setError('Please upload a .txt or .zip file')
+  const extractTxtFromZip = async (zipFile: File): Promise<File | null> => {
+    try {
+      const zip = new JSZip()
+      const zipContents = await zip.loadAsync(zipFile)
+      
+      // Find the first .txt file in the ZIP
+      const txtFiles = Object.values(zipContents.files).filter(file => 
+        !file.dir && file.name.toLowerCase().endsWith('.txt')
+      )
+      
+      if (txtFiles.length === 0) {
+        throw new Error('No .txt file found in the ZIP archive')
+      }
+
+      // Extract the content of the first txt file
+      const txtFile = txtFiles[0]
+      const content = await txtFile.async('blob')
+      
+      // Create a new File object with the extracted content
+      return new File([content], txtFile.name, { type: 'text/plain' })
+    } catch (err) {
+      console.error('Error extracting txt from zip:', err)
+      throw new Error('Failed to extract text file from ZIP')
     }
   }
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    setError(null)
+    
+    const droppedFile = e.dataTransfer.files?.[0]
+    if (!droppedFile) return
+
+    try {
+      if (droppedFile.name.endsWith('.zip')) {
+        const extractedFile = await extractTxtFromZip(droppedFile)
+        if (extractedFile) {
+          setFile(extractedFile)
+        }
+      } else if (droppedFile.name.endsWith('.txt')) {
+        setFile(droppedFile)
+      } else {
+        setError('Please upload a .txt or .zip file')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error processing file')
+    }
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = event.target.files?.[0]
-    if (uploadedFile) {
-      setFile(uploadedFile)
-      setError(null)
+    if (!uploadedFile) return
+    
+    setError(null)
+    
+    try {
+      if (uploadedFile.name.endsWith('.zip')) {
+        const extractedFile = await extractTxtFromZip(uploadedFile)
+        if (extractedFile) {
+          setFile(extractedFile)
+        }
+      } else if (uploadedFile.name.endsWith('.txt')) {
+        setFile(uploadedFile)
+      } else {
+        setError('Please upload a .txt or .zip file')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error processing file')
     }
   }
 
