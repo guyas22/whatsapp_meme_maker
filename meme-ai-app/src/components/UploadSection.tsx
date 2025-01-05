@@ -1,5 +1,4 @@
 import React from 'react';
-import JSZip from 'jszip';
 
 interface UploadSectionProps {
   currentStep: number;
