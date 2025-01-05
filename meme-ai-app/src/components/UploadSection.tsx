@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChatProcessingIndicator } from './LoadingIndicators';
 
 interface UploadSectionProps {
   currentStep: number;
@@ -47,17 +48,24 @@ export const UploadSection: React.FC<UploadSectionProps> = ({
           {file ? (
             <>
               <span className="file-name">{file.name}</span>
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleProcessChat();
-                }}
-                className="process-button"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Processing...' : 'Start Processing'}
-              </button>
+              {isLoading ? (
+                <ChatProcessingIndicator 
+                  message="Processing WhatsApp Chat"
+                  subtitle="Analyzing messages and extracting participants... This might take a moment"
+                />
+              ) : (
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleProcessChat();
+                  }}
+                  className="process-button"
+                  disabled={isLoading}
+                >
+                  Start Processing
+                </button>
+              )}
             </>
           ) : (
             <>

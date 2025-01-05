@@ -13,7 +13,7 @@ interface UseMemeGenerationReturn {
   mentionFilter: string;
   cursorPosition: number;
   setMemePrompt: (prompt: string) => void;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleMentionClick: (sender: string) => void;
   handleGenerateMeme: () => Promise<void>;
 }
@@ -30,7 +30,7 @@ export const useMemeGeneration = (apiBaseUrl: string): UseMemeGenerationReturn =
   const [mentionFilter, setMentionFilter] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     const position = e.target.selectionStart || 0;
     setMemePrompt(value);
