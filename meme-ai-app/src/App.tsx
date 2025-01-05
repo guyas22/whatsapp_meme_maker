@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import './App.css'
 import JSZip from 'jszip'
+import { ProgressBar } from './components/ProgressBar'
+import { UploadSection } from './components/UploadSection'
+import { MemeSection } from './components/MemeSection'
+import { ResultSection } from './components/ResultSection'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL 
-
-
-console.log('API_BASE_URL:', API_BASE_URL);
-// console.log('Environment Variables:', import.meta.env);
 
 function App() {
   // State management
@@ -201,40 +201,6 @@ function App() {
     document.body.removeChild(link)
   }
 
-  const ChatMessage = ({ message }: { message: string }) => {
-    const messages = message.split(/\[.*?\] /).filter(msg => msg.trim())
-    
-    return (
-      <div className="chat-messages">
-        {messages.map((msg, index) => (
-          <div key={index} className="chat-message received">
-            <div className="chat-message-content">
-              {msg.trim()}
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  const ProgressBar = () => (
-    <div className="progress-bar-container">
-      <div className="progress-bar" data-step={currentStep}>
-        {[1, 2, 3].map((step) => (
-          <div 
-            key={step} 
-            className={`progress-step ${currentStep >= step ? 'active' : ''} ${currentStep === step ? 'current' : ''}`}
-          >
-            <div className="step-number">{step}</div>
-            <div className="step-label">
-              {step === 1 ? 'Upload Chat' : step === 2 ? 'Generate Meme' : 'Result'}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-
   // Handle @ mentions
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -294,7 +260,7 @@ function App() {
         </button>
       </header>
 
-      <ProgressBar />
+      <ProgressBar currentStep={currentStep} />
 
       <main>
         {error && (
@@ -303,218 +269,42 @@ function App() {
           </div>
         )}
 
-        <section className={`upload-section ${currentStep === 1 ? 'active-step' : ''}`}>
-          <h2>Upload Your WhatsApp Chat</h2>
-          <div 
-            className={`drop-zone ${dragActive ? 'drag-active' : ''} ${file ? 'has-file' : ''}`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            <input
-              type="file"
-              accept=".txt,.zip"
-              onChange={handleFileUpload}
-              className="file-input"
-              disabled={isLoading || !!file}
-            />
-            <div className="drop-zone-content" onClick={(e) => {
-              if (file) {
-                e.preventDefault()
-                e.stopPropagation()
-              }
-            }}>
-              {file ? (
-                <>
-                  <span className="file-name">{file.name}</span>
-                  <button 
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      handleProcessChat()
-                    }}
-                    className="process-button"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Processing...' : 'Start Processing'}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="upload-icon">📤</div>
-                  <p>Drag and drop your WhatsApp chat export here or click to browse</p>
-                  <span className="file-hint">Accepts .txt or .zip files</span>
-                </>
-              )}
-            </div>
-          </div>
-        </section>
+        <UploadSection
+          currentStep={currentStep}
+          file={file}
+          isLoading={isLoading}
+          dragActive={dragActive}
+          handleDrag={handleDrag}
+          handleDrop={handleDrop}
+          handleFileUpload={handleFileUpload}
+          handleProcessChat={handleProcessChat}
+        />
 
-        <section className={`meme-section ${currentStep === 2 ? 'active-step' : ''}`}>
-          <h2>Create Your Meme</h2>
-          {isProcessed && (
-            <>
-              <div className="chat-info">
-                {groupName && (
-                  <div className="group-name">
-                    <h3>Group Name:</h3>
-                    <span className="group-name-text">{groupName}</span>
-                  </div>
-                )}
-                <div className="chat-participants">
-                  <h3>Chat Participants:</h3>
-                  <div className="participants-list">
-                    {senders.map((sender, index) => (
-                      <span key={index} className="participant-chip">
-                        {sender}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+        <MemeSection
+          currentStep={currentStep}
+          isProcessed={isProcessed}
+          groupName={groupName}
+          senders={senders}
+          memePrompt={memePrompt}
+          isLoading={isLoading}
+          showMentions={showMentions}
+          mentionFilter={mentionFilter}
+          handleInputChange={handleInputChange}
+          handleMentionClick={handleMentionClick}
+          handleGenerateMeme={handleGenerateMeme}
+          setMemePrompt={setMemePrompt}
+        />
 
-              <div className="example-prompts">
-                <h3>Need inspiration? Try these:</h3>
-                <div className="prompt-suggestions">
-                  <button 
-                    className="suggestion-chip"
-                    onClick={() => setMemePrompt(`תעשה מם על הבדיחות של ${senders[Math.floor(Math.random() * senders.length)]} `)}
-                  >
-                   🤣 מם על בדיחות של אחד מחברי הקבוצה
-                  </button>
-                  <button 
-                    className="suggestion-chip"
-                    onClick={() => setMemePrompt(`תעשה מם על האיחורים של ${senders[Math.floor(Math.random() * senders.length)]}`)}
-                  >
-                   ⏰ מם על האיחורים של אחד מחברי הקבוצה 
-                  </button>
-                  <button 
-                    className="suggestion-chip"
-                    onClick={() => setMemePrompt(`תעשה מם על האוכל של ${senders[Math.floor(Math.random() * senders.length)]}`)}
-                  >
-                   🍔 מם על האוכל שאחד מחברי הקבוצה מכין
-                  </button>
-                </div>
-              </div>
-
-              <div className="meme-input">
-                <div className="input-container">
-                  <input
-                    type="text"
-                    value={memePrompt}
-                    onChange={handleInputChange}
-                    placeholder="תאר את המם שאתה רוצה ליצור... (השתמש ב-@ כדי לתייג חבר)"
-                    dir="rtl"
-                    disabled={isLoading}
-                  />
-                  {showMentions && (
-                    <div className="mentions-dropdown">
-                      {senders
-                        .filter(sender => 
-                          sender.toLowerCase().includes(mentionFilter)
-                        )
-                        .map((sender, index) => (
-                          <div
-                            key={index}
-                            className="mention-item"
-                            onClick={() => handleMentionClick(sender)}
-                          >
-                            {sender}
-                          </div>
-                        ))
-                      }
-                    </div>
-                  )}
-                </div>
-                <button 
-                  onClick={handleGenerateMeme}
-                  disabled={!memePrompt || isLoading}
-                  className="generate-button"
-                >
-                  {isLoading ? (
-                    <span className="loading-spinner">🔄</span>
-                  ) : (
-                    'Generate Meme 🎨'
-                  )}
-                </button>
-              </div>
-            </>
-          )}
-        </section>
-
-        {generatedMeme && (
-          <section className={`result-section ${currentStep === 3 ? 'active-step' : ''}`}>
-            <div className="result-container">
-              <div className="meme-display">
-                <h3>Your Generated Meme</h3>
-                <div className="meme-preview">
-                  <img src={generatedMeme} alt="Generated Meme" />
-                  <div className="meme-actions">
-                    <button 
-                      className="download-button"
-                      onClick={handleDownloadMeme}
-                    >
-                      Download Meme ⬇️
-                    </button>
-                    <button 
-                      className="share-button"
-                      onClick={() => {
-                        if (navigator.share) {
-                          navigator.share({
-                            title: 'Check out my meme!',
-                            text: 'Generated with WhatsApp Meme Generator',
-                            url: generatedMeme
-                          })
-                        }
-                      }}
-                    >
-                      Share Meme 🔗
-                    </button>
-                  </div>
-                </div>
-
-                {(templateExplanation || templateFormat) && (
-                  <div className="meme-explanation">
-                    <button 
-                      className="explanation-toggle"
-                      onClick={() => setIsExplanationVisible(!isExplanationVisible)}
-                    >
-                      {isExplanationVisible ? '🔼 Hide AI Explanation' : '🔽 Show AI Explanation'}
-                    </button>
-                    {isExplanationVisible && (
-                      <div className="explanation-content">
-                        <h4>About this Meme</h4>
-                        {templateExplanation && (
-                          <div className="explanation">
-                            <strong>Why this template:</strong> {templateExplanation}
-                          </div>
-                        )}
-                        {templateFormat && (
-                          <div className="format">
-                            <strong>Template format:</strong> {templateFormat}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="context-display">
-                <h3>Chat Context Used</h3>
-                <div className="chat-container">
-                  {contextChunks.map((chunk, index) => (
-                    <div key={index} className="conversation-chunk">
-                      <h4>Conversation {index + 1}</h4>
-                      <ChatMessage message={chunk.content} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
+        <ResultSection
+          currentStep={currentStep}
+          generatedMeme={generatedMeme}
+          templateExplanation={templateExplanation}
+          templateFormat={templateFormat}
+          isExplanationVisible={isExplanationVisible}
+          setIsExplanationVisible={setIsExplanationVisible}
+          contextChunks={contextChunks}
+          handleDownloadMeme={handleDownloadMeme}
+        />
       </main>
     </div>
   )
