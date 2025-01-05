@@ -101,8 +101,8 @@ def generate_meme():
     else:
         return jsonify({'error': 'Failed to generate meme'}), 500
 
-# if __name__ == '__main__':
-#     app.run(debug=True, port=5000) 
+if __name__ == "__main__":
+    app.run(debug=False, host="0.0.0.0", port=8080)
 
-def handler(event, context):
-    return awsgi.response(app, event, context)
+# def handler(event, context):
+#     return awsgi.response(app, event, context)
