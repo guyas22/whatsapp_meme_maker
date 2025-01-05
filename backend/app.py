@@ -84,22 +84,32 @@ def generate_meme():
         return jsonify({'error': result['error']}), 500
     
     # Return both the meme image and context data
-    if os.path.exists(result['meme_path']):
-        # Read the image file
-        with open(result['meme_path'], 'rb') as img_file:
-            img_data = img_file.read()
-        
-        # Prepare the response data
-        response_data = {
-            'context_chunks': result['context_chunks'],
-            'template_explanation': result['template_explanation'],
-            'template_format': result['template_format'],
-            'image_data': img_data.hex()  # Include image data in the JSON body
-        }
-        
-        return jsonify(response_data)
-    else:
-        return jsonify({'error': 'Failed to generate meme'}), 500
+    try:
+        if os.path.exists(result['meme_path']):
+            # Read the image file
+            with open(result['meme_path'], 'rb') as img_file:
+                img_data = img_file.read()
+            
+            # Clean up the image file after reading
+            try:
+                os.remove(result['meme_path'])
+            except Exception as e:
+                print(f"Warning: Could not remove temporary file: {e}")
+            
+            # Prepare the response data
+            response_data = {
+                'context_chunks': result['context_chunks'],
+                'template_explanation': result['template_explanation'],
+                'template_format': result['template_format'],
+                'image_data': img_data.hex()  # Include image data in the JSON body
+            }
+            
+            return jsonify(response_data)
+        else:
+            return jsonify({'error': f'Image file not found at path: {result["meme_path"]}'}), 500
+    except Exception as e:
+        print(f"Error handling meme file: {str(e)}")
+        return jsonify({'error': f'Failed to process meme: {str(e)}'}), 500
 
 if __name__ == "__main__":
     app.run(debug=False, host="0.0.0.0", port=8080)
