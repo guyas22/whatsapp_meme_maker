@@ -62,44 +62,28 @@ export const useMemeGeneration = (apiBaseUrl: string): UseMemeGenerationReturn =
   };
 
   const handleGenerateMeme = async () => {
-    if (!memePrompt) return;
-
     setIsLoading(true);
     setError(null);
-
     try {
       const response = await fetch(`${apiBaseUrl}/api/generate-meme`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query: memePrompt })
+        body: JSON.stringify({ prompt: memePrompt }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || `Error generating meme: ${response.statusText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      
-      if (!data.image_data) {
-        throw new Error('No image data received from server');
-      }
-
-      const byteArray = new Uint8Array(data.image_data.match(/.{1,2}/g).map((byte: string) => parseInt(byte, 16)));
-      const blob = new Blob([byteArray], { type: 'image/jpeg' });
-      const imageUrl = URL.createObjectURL(blob);
-      
-      setGeneratedMeme(imageUrl);
-      setContextChunks(data.context_chunks.map((chunk: any) => ({
-        content: chunk[0],
-        metadata: chunk[1]
-      })));
-      setTemplateExplanation(data.template_explanation || null);
-      setTemplateFormat(data.template_format || null);
+      const result: MemeGenerationResult = await response.json();
+      setGeneratedMeme(result.imageUrl);
+      setContextChunks(result.contextChunks);
+      setTemplateExplanation(result.templateExplanation);
+      setTemplateFormat(result.templateFormat);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error generating meme');
+      setError(err instanceof Error ? err.message : 'Failed to generate meme');
     } finally {
       setIsLoading(false);
     }
