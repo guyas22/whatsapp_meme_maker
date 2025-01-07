@@ -1,9 +1,11 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const APP_URL = import.meta.env.VITE_APP_URL;
 
 export const STEPS = {
   UPLOAD: 1,
   GENERATE: 2,
   RESULT: 3,
+  LIMIT_REACHED: 4,
 } as const;
 
 export const ACCEPTED_FILE_TYPES = {

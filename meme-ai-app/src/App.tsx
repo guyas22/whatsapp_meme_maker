@@ -1,22 +1,40 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import './App.css'
+import { Authenticator, useAuthenticator, View, Button } from '@aws-amplify/ui-react'
+import { Amplify } from 'aws-amplify'
+import { signOut as amplifySignOut } from 'aws-amplify/auth'
+import outputs from '../amplify_outputs.json'
+import '@aws-amplify/ui-react/styles.css'
 import { ProgressBar } from './components/ProgressBar'
 import { UploadSection } from './components/UploadSection'
 import { MemeSection } from './components/MemeSection'
 import { ResultSection } from './components/ResultSection'
+import { LimitReachedSection } from './components/LimitReachedSection'
 import { useFileUpload } from './hooks/useFileUpload'
 import { useMemeGeneration } from './hooks/useMemeGeneration'
 import { API_BASE_URL, STEPS } from './constants/config'
 import { downloadImage, shareImage } from './utils/memeUtils'
+import { useMemeCount } from './hooks/useMemeCount'
+
+Amplify.configure(outputs)
 
 type Step = typeof STEPS[keyof typeof STEPS]
 
-function App() {
+function AppContent() {
+  const { user } = useAuthenticator()
   const [currentStep, setCurrentStep] = useState<Step>(STEPS.UPLOAD)
   const [isProcessed, setIsProcessed] = useState(false)
   const [senders, setSenders] = useState<string[]>([])
   const [groupName, setGroupName] = useState<string>('')
   const [isExplanationVisible, setIsExplanationVisible] = useState(false)
+  const { 
+    count: memeCount, 
+    loading: countLoading, 
+    incrementCount,
+    canGenerateMore,
+    remainingMemes,
+    error: countError
+  } = useMemeCount(user?.username || '')
 
   const {
     file,
@@ -56,9 +74,20 @@ function App() {
   }, [handleProcessChat])
 
   const handleGenerateMemeWrapper = useCallback(async () => {
-    await handleGenerateMeme()
-    setCurrentStep(STEPS.RESULT)
-  }, [handleGenerateMeme])
+    if (!canGenerateMore) {
+      setCurrentStep(STEPS.LIMIT_REACHED);
+      return;
+    }
+    await handleGenerateMeme();
+    await incrementCount();
+    setCurrentStep(STEPS.RESULT);
+  }, [handleGenerateMeme, incrementCount, canGenerateMore]);
+
+  useEffect(() => {
+    if (!canGenerateMore && currentStep !== STEPS.LIMIT_REACHED) {
+      setCurrentStep(STEPS.LIMIT_REACHED);
+    }
+  }, [canGenerateMore, currentStep]);
 
   const handleDownloadMeme = useCallback(() => {
     if (generatedMeme) {
@@ -98,6 +127,21 @@ function App() {
     }
   }, [])
 
+  const handleSignOut = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    console.log('Sign out clicked')
+    try {
+      console.log('Attempting to sign out...')
+      await amplifySignOut({ global: true })
+      console.log('Sign out successful')
+      window.location.reload() // Force reload after sign out
+    } catch (error) {
+      console.error('Error signing out:', error)
+      alert('Failed to sign out. Please try again.')
+    }
+  }, [])
+
   return (
     <div className="app-container">
       <header>
@@ -108,6 +152,32 @@ function App() {
             <button onClick={testConnection} className="test-connection">
               Test Connection
             </button>
+            <Button
+              onClick={handleSignOut}
+              className="amplify-button sign-out-button"
+              style={{
+                cursor: 'pointer',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                color: 'white',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                marginLeft: '1rem',
+                zIndex: 100
+              }}
+            >
+              Sign Out
+            </Button>
+            <span className="user-info">
+              Welcome, {user?.username}!
+              {!countLoading && (
+                <span className="meme-count">
+                  ({memeCount} memes generated
+                  {canGenerateMore ? `, ${remainingMemes} remaining` : ', limit reached'})
+                </span>
+              )}
+            </span>
           </div>
         </div>
       </header>
@@ -115,10 +185,10 @@ function App() {
       <ProgressBar currentStep={currentStep} />
 
       <main>
-        {(fileError || memeError) && (
+        {(fileError || memeError || countError) && (
           <div className="error-message" role="alert">
             <span className="error-icon">⚠️</span>
-            <span>{fileError || memeError}</span>
+            <span>{fileError || memeError || countError}</span>
           </div>
         )}
 
@@ -146,6 +216,7 @@ function App() {
           handleMentionClick={handleMentionClick}
           handleGenerateMeme={handleGenerateMemeWrapper}
           setMemePrompt={setMemePrompt}
+          canGenerateMore={canGenerateMore}
         />
 
         <ResultSection
@@ -159,6 +230,8 @@ function App() {
           handleDownloadMeme={handleDownloadMeme}
           handleShareMeme={handleShareMeme}
         />
+
+        <LimitReachedSection isVisible={currentStep === STEPS.LIMIT_REACHED} />
       </main>
 
       <footer className="footer">
@@ -167,6 +240,14 @@ function App() {
         <p className="job-status">psst... 👀 looking for a Software Engineering position!</p>
       </footer>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <Authenticator>
+      <AppContent />
+    </Authenticator>
   )
 }
 

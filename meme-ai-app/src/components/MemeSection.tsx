@@ -14,6 +14,7 @@ interface MemeSectionProps {
   handleMentionClick: (sender: string) => void;
   handleGenerateMeme: () => void;
   setMemePrompt: (prompt: string) => void;
+  canGenerateMore: boolean;
 }
 
 export const MemeSection: React.FC<MemeSectionProps> = ({
@@ -29,6 +30,7 @@ export const MemeSection: React.FC<MemeSectionProps> = ({
   handleMentionClick,
   handleGenerateMeme,
   setMemePrompt,
+  canGenerateMore,
 }) => {
   return (
     <section className={`meme-section ${currentStep === 2 ? 'active-step' : ''}`}>
@@ -60,18 +62,21 @@ export const MemeSection: React.FC<MemeSectionProps> = ({
               <button 
                 className="suggestion-chip"
                 onClick={() => setMemePrompt(`תעשה מם על הבדיחות של ${senders[Math.floor(Math.random() * senders.length)]} `)}
+                disabled={!canGenerateMore}
               >
                 🤣 מם על בדיחות של אחד מחברי הקבוצה
               </button>
               <button 
                 className="suggestion-chip"
                 onClick={() => setMemePrompt(`תעשה מם על האיחורים של ${senders[Math.floor(Math.random() * senders.length)]}`)}
+                disabled={!canGenerateMore}
               >
                 ⏰ מם על האיחורים של אחד מחברי הקבוצה 
               </button>
               <button 
                 className="suggestion-chip"
                 onClick={() => setMemePrompt(`תעשה מם על האוכל של ${senders[Math.floor(Math.random() * senders.length)]}`)}
+                disabled={!canGenerateMore}
               >
                 🍔 מם על האוכל שאחד מחברי הקבוצה מכין
               </button>
@@ -85,7 +90,7 @@ export const MemeSection: React.FC<MemeSectionProps> = ({
                 onChange={handleInputChange}
                 placeholder="תאר את המם שאתה רוצה ליצור... (השתמש ב-@ כדי לתייג חבר)"
                 dir="rtl"
-                disabled={isLoading}
+                disabled={isLoading || !canGenerateMore}
                 rows={1}
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
@@ -97,7 +102,7 @@ export const MemeSection: React.FC<MemeSectionProps> = ({
                 <div className="mentions-dropdown">
                   {senders
                     .filter(sender => 
-                      sender.toLowerCase().includes(mentionFilter)
+                      sender.toLowerCase().includes(mentionFilter.toLowerCase())
                     )
                     .map((sender, index) => (
                       <div
@@ -107,20 +112,23 @@ export const MemeSection: React.FC<MemeSectionProps> = ({
                       >
                         {sender}
                       </div>
-                    ))
-                  }
+                    ))}
                 </div>
               )}
             </div>
-            <button 
+            <button
               onClick={handleGenerateMeme}
-              disabled={!memePrompt || isLoading}
-              className={`generate-button ${isLoading ? 'loading' : ''}`}
+              disabled={!memePrompt || isLoading || !canGenerateMore}
+              className={isLoading ? 'loading' : ''}
             >
               {isLoading ? (
-                <MemeGenerationIndicator message="Creating your meme... This might take a few seconds" />
+                <div className="generate-loading">
+                  <span>Creating...</span>
+                </div>
+              ) : canGenerateMore ? (
+                'Generate Meme'
               ) : (
-                'Generate Meme 🎨'
+                'Meme Limit Reached'
               )}
             </button>
           </div>
