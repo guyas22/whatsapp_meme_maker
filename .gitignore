@@ -49,3 +49,4 @@ ENV/
 backend/vector_store/
 .env
 meme-ai-app/.env
+meme-ai-app/node_modules
